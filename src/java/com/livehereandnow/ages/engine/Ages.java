@@ -471,8 +471,8 @@ public class Ages implements AgesCommon {
             setDebgug(feedback);
 
             System.out.println("123456789");
-            getP1().更新文明板塊上所提供的數據();
-            getP2().更新文明板塊上所提供的數據();
+            getP1().do更新文明板塊上所提供的數據();
+            getP2().do更新文明板塊上所提供的數據();
 
             return true;
         }
@@ -517,8 +517,8 @@ public class Ages implements AgesCommon {
 //        setFeedback();
         setDebgug("[parser]: unknown command," + cmd + ", just ignore it!");
         System.out.println("123456789");
-        getP1().更新文明板塊上所提供的數據();
-        getP2().更新文明板塊上所提供的數據();
+        getP1().do更新文明板塊上所提供的數據();
+        getP2().do更新文明板塊上所提供的數據();
         return false;
 
     }
@@ -548,8 +548,8 @@ public class Ages implements AgesCommon {
     public String doCmd(String keyword) throws IOException, AgesException {
         switch (keyword) {
             case "9999":
-                getP1().更新文明板塊上所提供的數據();
-                getP2().更新文明板塊上所提供的數據();
+                getP1().do更新文明板塊上所提供的數據();
+                getP2().do更新文明板塊上所提供的數據();
                 return "9999";
             case "server":
 
@@ -1226,19 +1226,25 @@ public class Ages implements AgesCommon {
     private boolean doEvent(int val) throws IOException {
         System.out.println("現在執行卡號ID為:" + val + "的事件");
         AgesCard card = cardFactory.getCardById(val);
-        if (!card.getTag().equals("事件")) {
-            System.out.println("只執行Tag=事件");
-            System.out.println("BUT THIS CARD'S TAG IS " + card.getTag());
-            return false;
-        }
-//        System.out.println("只執行Tag=事件");
+        /*限制事件，做檢測先關掉        
+         if (!card.getTag().equals("事件")) {
+         System.out.println("只執行Tag=事件");
+         System.out.println("BUT THIS CARD'S TAG IS " + card.getTag());
+         return false;
+         }
+         */
+        //        System.out.println("只執行Tag=事件");
 //        System.out.println(field.get現在發生事件().get(0).getAction());
         switch (val) {
+            case 7777:
+                System.out.println("測試支付9資源");
+                this.currentPlayer.do支付資源(9);
+                break;
             case 8888:
                 System.out.println(currentPlayer.get文明所需的笑臉());
                 break;
             case 9999:
-                getP1().更新文明板塊上所提供的數據();
+                getP1().do更新文明板塊上所提供的數據();
                 break;
             case 1005:
                 getP1().act擴充人口();
@@ -1276,8 +1282,8 @@ public class Ages implements AgesCommon {
 
                 break;
             case 1019:
-                getP1().獲得資源(9);
-                getP2().獲得資源(5);
+                getP1().do獲得資源(9);
+                getP2().do獲得資源(5);
                 break;
             case 1129:
 //                                行動:所有的文明每有一個不高興的工人，就失去四點文明分數
@@ -1707,7 +1713,7 @@ public class Ages implements AgesCommon {
          *
          * @param val
          */
-        public void 獲得資源(int val) {
+        public void do獲得資源(int val) {
             System.out.println("正在開發獲得資源");
             System.out.println(getScore().getMap());
             System.out.println(this.getToken藍().getMap());
@@ -1743,7 +1749,7 @@ public class Ages implements AgesCommon {
             return 內政手牌上限;
         }
 
-        public void 更新文明板塊上所提供的數據() {
+        public void do更新文明板塊上所提供的數據() {
 //        暫存應用區
             int val = 0;
             int 內政點數val = 0;
@@ -2011,6 +2017,23 @@ public class Ages implements AgesCommon {
             return val;
         }
 
+        public String get資源明細() {
+            int val = 0;
+//            int val
+            String str = "";
+
+            for (int x = 0; x < this.礦山區.size(); x++) {
+                val = val + 礦山區.get(x).getTokenBlue() * 礦山區.get(x).getEffectStone();
+                str = str + "(" + 礦山區.get(x).getEffectStone() + "*" + 礦山區.get(x).getTokenBlue() + ")";
+                if (x != 礦山區.size() - 1) {
+                    str += "+";
+                }
+            }
+            str = val + "=" + str;
+//            System.out.println("玩家目前有 " + val + " 點資源");
+            return str;
+        }
+
         public int get食物() {
             int val = 0;
             for (int x = 0; x < this.農場區.size(); x++) {
@@ -2031,21 +2054,32 @@ public class Ages implements AgesCommon {
         public Points get額外用於建造軍事單位的資源() {
             return 額外用於建造軍事單位的資源;
         }
-/**
- * 給予方法int成本
- * 參照該玩家面板上最好的方法支付資源
- * 舉例:礦山等級/藍點  A/5 I/4 II/1 III/1
- * 支付5點
- * A/0 I/4 II/1 III/1
- * 支付6點>支付7點
- * A/0 I/3 II/1 III/1
- * 獲得1點資源
-  * A/1 I/3 II/1 III/1
-* @param k 
- */
-        public void do支付資源(int k){
-            
+
+        /**
+         * 給予方法int成本 參照該玩家面板上最好的方法支付資源 舉例:礦山等級(加權指數)/藍點 A(1)/5 I(2)/4 II(3)/1
+         * III(5)/1 支付5點 A/0 I/4 II/1 III/1 支付6點>支付7點 A/0 I/3 II/1 III/1 獲得1點資源
+         * A/1 I/3 II/1 III/1 === AAA === 資源:17 =(1*5) + (2*6) 食物:0
+         *
+         * @param k
+         */
+        public void do支付資源(int k) {
+            System.out.println("現在開始支付資源");
+            int val = k;
+            for (int x = 0; x < this.礦山區.size(); x++) {
+                while ((val > 0) && (this.礦山區.get(x).getTokenBlue() != 0)) {
+//                    while ((val > 0)) {
+                    System.out.println("");
+                    val = val - 礦山區.get(x).getEffectStone();
+                    System.out.println("還需支付的資源"+val);
+                    礦山區.get(x).setTokenBlue(礦山區.get(x).getTokenBlue() - 1);
+//                    System.out.println("減少");
+                }
+            }
+            if (val < 0) {
+                do獲得資源(-val);
+            }
         }
+
         public void set額外用於建造軍事單位的資源(Points 額外用於建造軍事單位的資源) {
             this.額外用於建造軍事單位的資源 = 額外用於建造軍事單位的資源;
         }
@@ -2352,11 +2386,11 @@ public class Ages implements AgesCommon {
 //2014-5-19-max 針對奇蹟的部分
             for (AgesCard card : 建造中的奇蹟區) {
                 if (card.getId() == id) {
-                     if (currentPlayer.內政點數.getVal() < 1) {
+                    if (currentPlayer.內政點數.getVal() < 1) {
                         System.out.println("你沒有足夠的內政點數");
                         return false;
                     }
-                     
+
                     if (currentPlayer.get資源() < wonderStages.get(0).intValue()) {
                         System.out.println("你沒有足夠的資源");
                         System.out.println("資源:" + currentPlayer.get資源() + "成本" + wonderStages.get(0).intValue());
@@ -2369,7 +2403,7 @@ public class Ages implements AgesCommon {
 //                        return false;
 //                     
 //                     }
-                     
+
 //                this.礦山區.get(0).setTokenBlue(礦山區.get(0).getTokenBlue() - wonderStages.get(0);
 //DOING 支付有效的代價
                     this.礦山區.get(0).setTokenBlue(礦山區.get(0).getTokenBlue() - 1);
@@ -2996,7 +3030,7 @@ public class Ages implements AgesCommon {
         }
 
         public void show() {
-            System.out.println("\n  === " + name + " ===     資源:" + get資源() + "    食物:" + get食物());
+            System.out.println("\n  === " + name + " ===     資源:" + get資源明細() + "    食物:" + get食物());
             內政點數.show("內政點數【白】");
             軍事點數.show("軍事點數【紅】");
             內政手牌上限.show("內政手牌上限");
