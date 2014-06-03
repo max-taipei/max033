@@ -772,6 +772,7 @@ public class Ages implements AgesCommon {
         int cost = cardCost[val];
 //        Player player = getCurrentPlayer();
         System.out.println("該牌需要支付多少內政點數:" + cost);
+
 //        目前拿牌不扣內政點
         if (currentPlayer.get內政點數().getVal() < cost) {
             System.out.println("NOT ENOUGH 內政點數");
@@ -781,6 +782,16 @@ public class Ages implements AgesCommon {
         if (card.getId() == 1000) {
             System.out.println("這裡沒有牌");
             return true;
+        }
+
+        //    如果這張牌是科技牌
+        if (card.is科技牌()) {
+            System.out.println("這是一張科技牌要寫程式不准拿重複");
+            if (this.currentPlayer.is已有該張科技牌(card)) {
+                System.out.println("ages:引擎偵測到玩家拿了一張重複的科技牌"+card.getName());
+                return false;
+//                System.exit(0);
+            }
         }
 
         //奇蹟 is the only one not go to ON-HAND
@@ -1006,7 +1017,16 @@ public class Ages implements AgesCommon {
             AgesCard card = map.get(key);
             switch (style) {
                 case 0:
-                    System.out.println(card.getTag() + " " + key + " " + getSameSizeName(card.getName()) + " " + card.getAction().trim() + " " + card.getIconPoints() + " " + card.getEffect());
+                    String yn = "是 ";
+                    if (card.is科技牌()) {
+//                        System.out.println("是 ");
+                    } else {
+                        yn = "否 ";
+//                        System.out.println("否 ");
+                    }
+
+                    System.out.print(yn + card.getTag() + " " + key + " " + getSameSizeName(card.getName()) + " " + card.getAction().trim() + " " + card.getIconPoints() + " " + card.getEffect());
+//                    System.out.println("123456");
                     break;
                 case 1:
                     if (card.getAction().length() > 0) {
@@ -1053,7 +1073,7 @@ public class Ages implements AgesCommon {
                     break;
                 case 9:
                     if (card.getTag().equals("礦山")) {
-                        System.out.println("時代:" + card.getAge() + " " + card.getTag() + " " + key + " " + getSameSizeName(card.getName()) + " " + card.getAction().trim() + " " + card.getIconPoints() + " " + card.getEffect());
+                        System.out.println("時代:" + card.getAge() + " " + card.getTag() + " " + key + " " + getSameSizeName(card.getName()) + " " + "張數" + card.getCnt() + " " + card.getAction().trim() + " " + card.getIconPoints() + " " + card.getEffect());
                     }
                     break;
                 case 10:
@@ -1236,6 +1256,11 @@ public class Ages implements AgesCommon {
         //        System.out.println("只執行Tag=事件");
 //        System.out.println(field.get現在發生事件().get(0).getAction());
         switch (val) {
+            case 12345:
+                System.out.println("列出玩家科技牌區域的所有牌數量:");
+                System.out.println(this.currentPlayer.get科技牌的檢查區域().size());
+//                this.currentPlayer.get科技牌的檢查區域();
+                break;
             case 7777:
                 System.out.println("測試支付9資源");
                 this.currentPlayer.do支付資源(9);
@@ -1748,6 +1773,10 @@ public class Ages implements AgesCommon {
         public Points get內政手牌上限() {
             return 內政手牌上限;
         }
+//public boolean is具有相同的牌()
+//{
+//    
+//}
 
         public void do更新文明板塊上所提供的數據() {
 //        暫存應用區
@@ -2034,10 +2063,27 @@ public class Ages implements AgesCommon {
             return str;
         }
 
+        public String get食物明細() {
+            int val = 0;
+//            int val
+            String str = "";
+
+            for (int x = 0; x < this.農場區.size(); x++) {
+                val = val + 農場區.get(x).getTokenBlue() * 農場區.get(x).getEffectFood();
+                str = str + "(" + 農場區.get(x).getEffectFood() + "*" + 農場區.get(x).getTokenBlue() + ")";
+                if (x != 農場區.size() - 1) {
+                    str += "+";
+                }
+            }
+            str = val + "=" + str;
+//            System.out.println("玩家目前有 " + val + " 點資源");
+            return str;
+        }
+
         public int get食物() {
             int val = 0;
             for (int x = 0; x < this.農場區.size(); x++) {
-                val = val + 農場區.get(x).getTokenBlue() * 農場區.get(x).getEffectStone();
+                val = val + 農場區.get(x).getTokenBlue() * 農場區.get(x).getEffectFood();
             }
             System.out.println("玩家目前有 " + val + " 點食物");
             return val;
@@ -2070,7 +2116,7 @@ public class Ages implements AgesCommon {
 //                    while ((val > 0)) {
                     System.out.println("");
                     val = val - 礦山區.get(x).getEffectStone();
-                    System.out.println("還需支付的資源"+val);
+                    System.out.println("還需支付的資源" + val);
                     礦山區.get(x).setTokenBlue(礦山區.get(x).getTokenBlue() - 1);
 //                    System.out.println("減少");
                 }
@@ -2698,6 +2744,51 @@ public class Ages implements AgesCommon {
             this.農場區 = 農場區;
         }
 
+        public boolean is已有該張科技牌(AgesCard card12345) {
+
+            for (AgesCard card : get科技牌的檢查區域()) {
+                if (card.getId() == card12345.getId()) {
+                    System.out.println("你不能拿取已經有的科技牌");
+                    return true;
+                }
+
+            }
+            return false;
+        }
+
+        public List<AgesCard> get科技牌的檢查區域() {
+            List<AgesCard> list = new ArrayList<>();
+            list.addAll(政府區);
+            list.addAll(實驗室);
+            list.addAll(劇院區);
+            list.addAll(競技場區);
+            list.addAll(圖書館區);
+            list.addAll(神廟區);
+            list.addAll(農場區);
+            list.addAll(礦山區);
+            list.addAll(步兵區);
+            list.addAll(騎兵區);
+            list.addAll(炮兵區);
+            list.addAll(空軍區);
+            list.addAll(手牌內政牌區);
+            return list;
+        }
+        /*
+         政府區
+         實驗室
+         劇院區
+         競技場
+         圖書館
+         神廟區
+         農場區
+         礦山區
+         步兵區
+         騎兵區
+         炮兵區
+         空軍區
+         手牌內政牌區
+         */
+
         public void set礦山區(List<AgesCard> 礦山區) {
             this.礦山區 = 礦山區;
         }
@@ -3030,7 +3121,7 @@ public class Ages implements AgesCommon {
         }
 
         public void show() {
-            System.out.println("\n  === " + name + " ===     資源:" + get資源明細() + "    食物:" + get食物());
+            System.out.println("\n  === " + name + " ===     資源:" + get資源明細() + "    食物:" + get食物明細());
             內政點數.show("內政點數【白】");
             軍事點數.show("軍事點數【紅】");
             內政手牌上限.show("內政手牌上限");

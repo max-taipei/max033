@@ -293,6 +293,13 @@ public class AgesCard implements Serializable, AgesCommon {
         this.seq = seq;
     }
 
+    public boolean is科技牌() {
+        if (this.costIdea != 0) {
+            return true;
+        }
+        return false;
+    }
+
     public int getId() {
         return id;
     }
