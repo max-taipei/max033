@@ -637,7 +637,7 @@ public class Ages implements AgesCommon {
             case "b":
             case "build":
                 if (this.getRound().getVal() == 1) {
-                    System.out.println("按遊戲規則第一回合，只能拿牌，不能做建造");
+                    System.out.println("按遊戲規則:第一回合，只能拿牌，不能做建造");
                     return false;
                 }
                 actBuild(val);
@@ -653,6 +653,10 @@ public class Ages implements AgesCommon {
             case "play":
             case "play-card":
             case "out-card":
+                if (this.getRound().getVal() == 1) {
+                    System.out.println("按遊戲規則:第一回合，只能拿牌，不能做打牌");
+                    return false;
+                }
                 return actPlayCard(val);
             case "military":
             case "m":
@@ -664,8 +668,16 @@ public class Ages implements AgesCommon {
             case "t":
             case "take":
             case "take-card":
-
                 return actTakeCard(val);
+            case "destroy":
+            case "d":
+                if (this.getRound().getVal() == 1) {
+                    System.out.println("按遊戲規則:第一回合，只能拿牌，不能做摧毀");
+                    return false;
+                }
+                actDestroy(val);
+                return true;
+
             case "doEvent":
             case "e":
                 return doEvent(val);
@@ -788,7 +800,7 @@ public class Ages implements AgesCommon {
         if (card.is科技牌()) {
             System.out.println("這是一張科技牌要寫程式不准拿重複");
             if (this.currentPlayer.is已有該張科技牌(card)) {
-                System.out.println("ages:引擎偵測到玩家拿了一張重複的科技牌"+card.getName());
+                System.out.println("ages:引擎偵測到玩家拿了一張重複的科技牌" + card.getName());
                 return false;
 //                System.exit(0);
             }
@@ -1101,6 +1113,12 @@ public class Ages implements AgesCommon {
     private boolean actBuild(int val) {
 //        System.out.println("按卡號build,適合所有的情況, including 奇蹟區");
         currentPlayer.actBuild(val);
+
+        return true;
+    }
+private boolean actDestroy(int val) {
+//        System.out.println("按卡號build,適合所有的情況, including 奇蹟區");
+        currentPlayer.actDestroy(val);
 
         return true;
     }
@@ -2356,6 +2374,10 @@ public class Ages implements AgesCommon {
             this.actBuild農場礦山(id);
             this.actBuild奇蹟(id);
         }
+public void actDestroy(int id) {
+            this.actDestroy農場礦山(id);
+            
+        }
 
         public void XXXactBuild(int id) {
 
@@ -2509,6 +2531,39 @@ public class Ages implements AgesCommon {
                     System.out.println("after  內政點數:" + this.內政點數 + "  工人區:" + this.工人區_黃點 + "  這張牌的黃點:"
                             + +card.getTokenYellow() + "  (成本" + card.getIconPoints() + ")" + "  礦山區 A青銅1032 藍點:" + this.get礦山區().get(0).getTokenBlue() + "  資源庫【藍】:" + this.資源庫_藍點);
                     System.out.println("成功建造" + card.getName());
+                    return true;//一次只操作一張牌，找到後返回
+                }
+            }
+//            System.out.println("不在可建造的項目裡面,目前只能建造農場、礦山");
+            System.out.println("指定牌不為農場礦山");
+            return false;
+        }
+public boolean actDestroy農場礦山(int id) {
+            List<AgesCard> buildList = new ArrayList<>();
+            buildList.addAll(農場區);
+            buildList.addAll(礦山區);
+            for (AgesCard card : buildList) {
+                if (card.getId() == id) {//找到目標的牌
+                    if (currentPlayer.內政點數.getVal() < 1) {
+                        System.out.println("你沒有足夠的內政點數");
+                        return false;
+                    }
+                    if (card.getTokenYellow() < 1) {
+                        System.out.println("你沒有工人");
+                        return false;
+                    }
+//                    System.out.println("before  內政點數:" + this.內政點數 + "  工人區:" + this.工人區_黃點 + "  這張牌的黃點:"
+//                            + +card.getTokenYellow() + "  (成本" + card.getIconPoints() + ")" + "  礦山區 A青銅1032 藍點:" + this.get礦山區().get(0).getTokenBlue() + "  資源庫【藍】:" + this.資源庫_藍點);
+                    card.setTokenYellow(card.getTokenYellow() - 1);//指定的卡上黃點+1
+                    this.工人區_黃點.addPoints(+1);//玩家的工人區-1
+                    this.內政點數.addPoints(-1);
+                    //支付石頭
+//                    this.礦山區.get(0).setTokenBlue(礦山區.get(0).getTokenBlue() - card.getCostStone());
+                    //增加資源庫的藍點
+//                    this.資源庫_藍點.addPoints(card.getCostStone());
+//                    System.out.println("after  內政點數:" + this.內政點數 + "  工人區:" + this.工人區_黃點 + "  這張牌的黃點:"
+//                            + +card.getTokenYellow() + "  (成本" + card.getIconPoints() + ")" + "  礦山區 A青銅1032 藍點:" + this.get礦山區().get(0).getTokenBlue() + "  資源庫【藍】:" + this.資源庫_藍點);
+                    System.out.println("摧毀成功" + card.getName());
                     return true;//一次只操作一張牌，找到後返回
                 }
             }
